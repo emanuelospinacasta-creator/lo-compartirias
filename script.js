@@ -1,3 +1,6 @@
+// Pega aquí la URL de tu aplicación web de Google Apps Script, después de implementarla.
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEVTGTeRyrtUr3cQ0pZo2wcvQUGp4WsAtatvktRfBWk3GWX-lrOZmZFRnGX8G_0HxUew/exec";
+
 const qs=[
 ["PRETEST","¿Qué tan importante es para ti proteger tu información personal en internet?",["Muy importante","Importante","Poco importante","Nada importante"],"choice"],
 ["PRETEST","¿Crees que compartir información personal en internet puede ser peligroso?",["Sí","No","No estoy seguro/a"],"choice"],
@@ -15,10 +18,14 @@ const qs=[
 ["REFLEXIÓN FINAL 🧠","Después del juego, ¿cambió tu forma de pensar sobre compartir información personal en internet?",["Sí, mucho","Sí, un poco","No cambió","No estoy seguro/a"],"choice"],
 ["REFLEXIÓN FINAL 🧠","¿Qué significa para ti tener privacidad en internet?",null,"text"]
 ];
-let i=0,sel=null,c={a:0,b:0,c:0};const $=x=>document.getElementById(x);
-function start(){i=0;c={a:0,b:0,c:0};$("game").classList.remove("hidden");render();$("experiencia").scrollIntoView()}
-function render(){let x=qs[i];sel=null;$("counter").textContent=`Pregunta ${i+1} de ${qs.length}`;$("bar").style.width=((i+1)/qs.length*100)+"%";$("station").textContent=x[0];$("q").textContent=x[1];$("opts").innerHTML="";$("txt").classList.toggle("hidden",x[3]!=="text");$("txt").value="";$("next").textContent=i===qs.length-1?"Ver mi resultado →":"Continuar →";if(x[2])x[2].forEach(o=>{let b=document.createElement("button");b.className="option";b.textContent=o;b.onclick=()=>{document.querySelectorAll(".option").forEach(z=>z.classList.remove("selected"));b.classList.add("selected");sel=o};$("opts").appendChild(b)})}
-function next(){let x=qs[i],v=x[3]==="text"?$("txt").value.trim():sel;if(!v)return alert("Responde esta pregunta antes de continuar.");if(x[3]==="decision"){if(v.startsWith("A."))c.a++;else if(v.startsWith("B."))c.b++;else c.c++}if(i<qs.length-1){i++;render()}else finish()}
-function finish(){$("game").classList.add("hidden");$("result").classList.remove("hidden");let total=c.a+c.b+c.c,score=total?Math.round((c.c*100+c.b*65+c.a*25)/total):0;$("score").textContent=score+"%";$("safe").textContent=c.c;$("check").textContent=c.b;$("share").textContent=c.a;$("result").scrollIntoView()}
-function showRef(){$("reflexion").classList.remove("hidden");$("reflexion").scrollIntoView()}
-$("final").addEventListener("input",()=>{$("chars").textContent=$("final").value.length+" / 500"});function save(){if(!$("final").value.trim())return alert("Escribe una reflexión antes de guardar.");localStorage.setItem("lo_compartirias_reflexion",$("final").value);$("saved").classList.remove("hidden")}
+let i=0,sel=null,c={a:0,b:0,c:0},answers=[];const $=x=>document.getElementById(x);
+function start(){i=0;c={a:0,b:0,c:0};answers=[];$('game').classList.remove('hidden');render();$('experiencia').scrollIntoView()}
+function render(){let x=qs[i];sel=null;$('counter').textContent=`Pregunta ${i+1} de ${qs.length}`;$('bar').style.width=((i+1)/qs.length*100)+'%';$('station').textContent=x[0];$('q').textContent=x[1];$('opts').innerHTML='';$('txt').classList.toggle('hidden',x[3]!=='text');$('txt').value='';$('next').textContent=i===qs.length-1?'Ver mi resultado →':'Continuar →';if(x[2])x[2].forEach(o=>{let b=document.createElement('button');b.className='option';b.textContent=o;b.onclick=()=>{document.querySelectorAll('.option').forEach(z=>z.classList.remove('selected'));b.classList.add('selected');sel=o};$('opts').appendChild(b)})}
+function next(){let x=qs[i],v=x[3]==='text'?$('txt').value.trim():sel;if(!v)return alert('Responde esta pregunta antes de continuar.');answers[i]=v;if(x[3]==='decision'){if(v.startsWith('A.'))c.a++;else if(v.startsWith('B.'))c.b++;else c.c++}if(i<qs.length-1){i++;render()}else finish()}
+function finish(){$('game').classList.add('hidden');$('result').classList.remove('hidden');let total=c.a+c.b+c.c,score=total?Math.round((c.c*100+c.b*65+c.a*25)/total):0;$('score').textContent=score+'%';$('safe').textContent=c.c;$('check').textContent=c.b;$('share').textContent=c.a;$('result').scrollIntoView()}
+function showRef(){$('reflexion').classList.remove('hidden');$('reflexion').scrollIntoView()}
+$('final').addEventListener('input',()=>$('chars').textContent=$('final').value.length+' / 500');
+async function save(){let reflection=$('final').value.trim();if(!reflection)return alert('Escribe una reflexión antes de guardar.');if(GOOGLE_SCRIPT_URL==='PEGA_AQUI_LA_URL_DE_APPS_SCRIPT'){alert('La página todavía no está conectada. Falta pegar la URL de Google Apps Script en script.js.');return;}
+const payload={answers:answers,extraReflection:reflection,counts:c,score: $('score').textContent,submittedAt:new Date().toISOString()};
+$('saved').textContent='Enviando respuestas…';$('saved').classList.remove('hidden');
+try{await fetch(GOOGLE_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});$('saved').textContent='¡Gracias! Se envió la solicitud de registro de tus respuestas ❤️';}catch(e){$('saved').textContent='No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.';}}
